@@ -1,0 +1,83 @@
+{
+   "checksum": "0f35930764a555db933f482f1dc3597c",
+   "roots": {
+      "bookmark_bar": {
+         "children": [ {
+            "date_added": "13377269933297014",
+            "date_last_used": "0",
+            "guid": "60f3832a-057f-4d13-904e-9547aeff4142",
+            "id": "15",
+            "name": "Booking.com",
+            "show_icon": false,
+            "source": "oem_preload",
+            "type": "url",
+            "url": "https://s3.amazonaws.com/amundsen/redirect/19q2/booking.html?utm_source=win32&utm_medium=favorite",
+            "visit_count": 0
+         }, {
+            "date_added": "13377264205730475",
+            "date_last_used": "0",
+            "guid": "776a519c-8b7a-4e3d-9264-3789833dff02",
+            "id": "12",
+            "name": "Booking.com",
+            "show_icon": false,
+            "source": "oem_preload",
+            "type": "url",
+            "url": "https://s3.amazonaws.com/amundsen/redirect/19q2/booking.html?utm_source=win32&utm_medium=favorite",
+            "visit_count": 0
+         }, {
+            "date_added": "13377263549837515",
+            "date_last_used": "0",
+            "guid": "72ca8e33-8ad9-4f55-b6e7-57969f3f57a3",
+            "id": "9",
+            "name": "Booking.com",
+            "show_icon": false,
+            "source": "oem_preload",
+            "type": "url",
+            "url": "https://s3.amazonaws.com/amundsen/redirect/19q2/booking.html?utm_source=win32&utm_medium=favorite",
+            "visit_count": 0
+         }, {
+            "date_added": "13377262366702675",
+            "date_last_used": "0",
+            "guid": "c1ca01a2-ca94-4231-b8e6-87905e7c39fe",
+            "id": "6",
+            "name": "Booking.com",
+            "show_icon": false,
+            "source": "oem_preload",
+            "type": "url",
+            "url": "https://s3.amazonaws.com/amundsen/redirect/19q2/booking.html?utm_source=win32&utm_medium=favorite",
+            "visit_count": 0
+         } ],
+         "date_added": "13377262366463288",
+         "date_last_used": "0",
+         "date_modified": "13377269933297014",
+         "guid": "0bc5d13f-2cba-5d74-951f-3f233fe6c908",
+         "id": "1",
+         "name": "Pasek ulubionych",
+         "source": "unknown",
+         "type": "folder"
+      },
+      "other": {
+         "children": [  ],
+         "date_added": "13377262366463291",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "82b081ec-3dd3-529c-8475-ab6c344590dd",
+         "id": "2",
+         "name": "Inne ulubione",
+         "source": "unknown",
+         "type": "folder"
+      },
+      "synced": {
+         "children": [  ],
+         "date_added": "13377262366463293",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "4cf2e351-0e85-532b-bb37-df045d8f8d0f",
+         "id": "3",
+         "name": "Ulubione mobilne",
+         "source": "unknown",
+         "type": "folder"
+      }
+   },
+   "version": 1
+}

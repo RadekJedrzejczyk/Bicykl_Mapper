@@ -1,0 +1,43 @@
+2024-11-28 12:50:07.968: [INFO][Sync] SyncState after authenticated was: FeatureCanStart
+2024-11-28 12:50:08.272: [INFO][Sync] Try to start sync engine
+2024-11-28 12:50:08.273: [INFO][SyncManagerImpl::NudgeForInitialDownload] Initial download nudge for Encryption Keys
+2024-11-28 12:50:08.273: [INFO][SyncEngineBackend::LoadAndConnectNigoriController] Load and connect Nigori controller
+2024-11-28 12:50:08.273: [INFO][SyncEngineBackend::DoInitialize] Control Types added: Encryption Keys
+2024-11-28 12:50:08.274: [INFO][SyncManagerImpl::ConfigureSyncer] Types to download: Encryption Keys with reason: 3
+2024-11-28 12:50:08.274: [INFO][SyncSchedulerImpl::DoConfigurationSyncCycleJob] Configure job was blocked
+2024-11-28 12:50:08.407: [INFO][SyncAuthManager::SetLastAuthError] Current auth error: None
+2024-11-28 12:50:08.407: [INFO][SyncAuthManager::EdgeLogTokenErrorState] Token error with: None for account type: AAD
+2024-11-28 12:50:08.407: [INFO][Sync] Credentials changed for: EdgeSyncKeyDataScope
+2024-11-28 12:50:08.407: [INFO][SyncEngineBackend::DoUpdateKeyDataCredentials] Update key data credentials
+2024-11-28 12:50:08.409: [INFO][SyncAuthManager::SetLastAuthError] Current auth error: None
+2024-11-28 12:50:08.409: [INFO][SyncAuthManager::EdgeLogTokenErrorState] Token error with: None for account type: AAD
+2024-11-28 12:50:08.409: [INFO][Sync] Credentials changed for: EdgeSyncScopeNew
+2024-11-28 12:50:08.409: [INFO][SyncEngineBackend::DoUpdateCredentials] Update credentials
+2024-11-28 12:50:08.409: [INFO][SyncEngineBackend::DoUpdateKeyDataCredentials] Update key data credentials
+2024-11-28 12:50:08.409: [INFO][SyncSchedulerImpl::DoConfigurationSyncCycleJob] Blocked types:  and types to download: Encryption Keys
+2024-11-28 12:50:08.416: [INFO][Sync] Reset engine, reason: 2
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: Bookmarks
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: Preferences
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: Passwords
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: Autofill Profiles
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: Autofill
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: Typed URLs
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: Extensions
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: Sessions
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: Extension settings
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: History Delete Directives
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: Device Info
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: User Consents
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: Send Tab To Self
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: Web Apps
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: History
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: Collection
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: Edge E Drop
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: Edge Hub App Usage
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: Edge Tab Group
+2024-11-28 12:50:08.416: [INFO][Sync] Stopped: Edge Wallet
+2024-11-28 12:50:08.416: [INFO][Sync] Reset engine with reason: 2
+2024-11-28 12:50:08.417: [INFO][SyncSchedulerImpl::OnSyncNetworkError] Syncer error: Network error (ERR_ABORTED)
+2024-11-28 12:50:08.417: [INFO][SyncSchedulerImpl::DoConfigurationSyncCycleJob] Syncer error: Success
+2024-11-28 12:50:08.420: [WARN][Sync] ActionableProtocolError: {"ErrorDescription":"Microsoft Information Protection service is disabled","ErrorType":"DISABLED_BY_ADMIN","action":"STOP_SYNC_FOR_DISABLED_ACCOUNT"}
+2024-11-28 13:14:28.030: [INFO][Sync] Reset engine, reason: 0
