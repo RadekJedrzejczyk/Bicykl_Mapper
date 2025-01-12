@@ -1,4 +1,5 @@
-import 'dart:html' as html; 
+import 'dart:html' as html; // Obsługa funkcji przeglądarki (np. pobieranie plików).
+
 
 Future<void> saveToGpx_body(dynamic state) async {
   if (state.points.isEmpty) {
@@ -22,11 +23,11 @@ Future<void> saveToGpx(dynamic state) async {
 </gpx>''';
 
   // Tworzenie pliku GPX do pobrania w przeglądarce
-  final blob = html.Blob([gpxContent], 'application/gpx+xml');
-  final url = html.Url.createObjectUrlFromBlob(blob);
-  final anchor = html.AnchorElement(href: url)
-    ..target = 'blank'
-    ..download = 'route.gpx'
-    ..click();
+  final blob = html.Blob([gpxContent], 'application/gpx+xml'); // Tworzenie obiektu zawierającego dane GPX.
+  final url = html.Url.createObjectUrlFromBlob(blob); // Generowanie tymczasowego URL dla pliku.
+  final anchor = html.AnchorElement(href: url)  // Tworzenie elementu HTML do pobrania.
+    ..target = 'blank'// Otwórz w nowej karcie.
+    ..download = 'route.gpx' // Nazwa pliku do pobrania.
+    ..click(); // Symulowanie kliknięcia (rozpoczęcie pobierania).
   html.Url.revokeObjectUrl(url); // Usunięcie URL po zakończeniu
 }

@@ -1,8 +1,5 @@
-//import 'package:http/http.dart' as http;
-import 'package:pdf/widgets.dart' as pw;
-//import 'package:pdf/pdf.dart';
-//import 'dart:typed_data';
-import 'package:intl/intl.dart';
+import 'package:pdf/widgets.dart' as pw; // Biblioteka do tworzenia dokumentów PDF.
+import 'package:intl/intl.dart'; // Umożliwia formatowanie dat i godzin.
 import 'dart:html' as html; 
 
 Future<void> saveToPdf_body(dynamic state) async {
@@ -13,25 +10,17 @@ Future<void> saveToPdf_body(dynamic state) async {
   pdf.addPage(pw.Page(
     build: (pw.Context context) {
       return pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        crossAxisAlignment: pw.CrossAxisAlignment.start, // Wyrównanie elementów do lewej.
         children: [
           // 1. Informacje o trasie
-          pw.Text(
-            'Wygenerowana Trasa Rowery',
-            style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
-          ),
-          pw.SizedBox(height: 10),
-          pw.Text(
-            'Data generowania: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}',
-          ),
+          pw.Text('Wygenerowana Trasa Rowery', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),),
+                    pw.SizedBox(height: 10), // Odstęp.
+          pw.Text( 'Data generowania: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}',),
           pw.Text('Profil trasy: Rower szosowy'),
           pw.SizedBox(height: 20),
 
           // 2. Szczegóły trasy
-          pw.Text(
-            'Plan trasy:',
-            style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
-          ),
+          pw.Text( 'Plan trasy:',style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),),
           pw.SizedBox(height: 10),
 
           // Lista punktów

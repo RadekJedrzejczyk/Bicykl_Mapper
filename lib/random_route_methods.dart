@@ -11,11 +11,11 @@ Future<void> generateRandomRoute_body(double loopDistance, dynamic state) async 
   if (state.startPoint == null) {
     ScaffoldMessenger.of(state.context).showSnackBar(
       const SnackBar(content: Text('Proszę wprowadzić punkt początkowy!')),
-    );
+    );  // Wyświetlenie komunikatu o błędzie.
     return;
   }
 
-  // Ustalanie tolerancji błędu na podstawie dystansu pętli
+  // Ustalanie tolerancji błędu na podstawie dystansu pętli - do zmiany na % długości
   double tolerance;
   if (loopDistance < 50) {
     tolerance = 5.0; // Tolerancja 5 km
@@ -25,7 +25,7 @@ Future<void> generateRandomRoute_body(double loopDistance, dynamic state) async 
     tolerance = 20.0; // Tolerancja 20 km
   }
 
-  bool isWithinTolerance = false;
+  bool isWithinTolerance = false;  // Flaga wskazująca, czy trasa spełnia kryteria tolerancji.
 
   while (!isWithinTolerance) {
     double radius = loopDistance / 2.5; // Promień pętli
@@ -67,15 +67,15 @@ Future<void> generateRandomRoute_body(double loopDistance, dynamic state) async 
 
         // Aktualizowanie stanu tylko, gdy pętla jest akceptowalna
         state.setState(() {
-          state.distance = totalDistance;
-          state.duration = totalDuration;
+          state.distance = totalDistance; // Ustawienie całkowitego dystansu.
+          state.duration = totalDuration; // Ustawienie całkowitego czasu.
 
           if (state.points.isNotEmpty) {
-            var bounds = LatLngBounds.fromPoints(state.points);
+            var bounds = LatLngBounds.fromPoints(state.points); // Obliczenie granic trasy.
             var center = bounds.center;
 
             // Ustawienie widoku mapy
-            state.mapController.move(center, 10.0); // Dostosuj zoom do swoich potrzeb
+            state.mapController.move(center, 10.0); // Przesunięcie mapy na środek trasy z odpowiednim zoomem.
           }
         });
       }
@@ -92,13 +92,13 @@ Future<void> generateRandomRoute_body(double loopDistance, dynamic state) async 
 Future<Map<String, double>> getCoordinatesForRouteWithDetails(LatLng start, LatLng end, dynamic state) async {
   String startStr = '${start.longitude},${start.latitude}';
   String endStr = '${end.longitude},${end.latitude}';
-
+ // Wysłanie żądania HTTP GET do API
   var response = await http.get(Uri.parse(getRouteUrl(state.selectedProfile, startStr, endStr).toString()));
-
+  // Sprawdzenie, czy odpowiedź jest prawidłowa
   if (response.statusCode == 200) {
-    var data = jsonDecode(response.body);
+    var data = jsonDecode(response.body);    // Dekodowanie odpowiedzi JSON
 
-    // Wyciąganie współrzędnych
+    // Wyciąganie współrzędnych trasy z odpowiedzi
     var listOfPoints = data['features'][0]['geometry']['coordinates'] as List<dynamic>;
     state.points.addAll(listOfPoints.map((e) => LatLng(e[1].toDouble(), e[0].toDouble())).toList());
 

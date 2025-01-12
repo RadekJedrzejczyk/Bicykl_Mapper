@@ -1,36 +1,23 @@
-//import 'dart:convert';
-import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
-//import 'package:http/http.dart' as http;
-//import 'package:navigation_app/api.dart';
-import 'package:navigation_app/gpx_utils.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/material.dart'; // Główna biblioteka do tworzenia aplikacji Flutter.
+import 'package:flutter_map/flutter_map.dart'; // Biblioteka do renderowania map w aplikacjach Flutter.
+import 'package:latlong2/latlong.dart'; // Obsługa współrzędnych geograficznych (latitude, longitude).
+import 'package:flutter/rendering.dart'; // Renderowanie widoków w Flutter.
+import 'package:flutter/services.dart'; // Obsługa systemu, np. schowka, plików.
+
 import 'package:navigation_app/pdf_utils.dart';
-//import 'package:navigation_app/gpx_utils.dart';
 import 'package:navigation_app/random_route_methods.dart';
 import 'package:navigation_app/coordinates_dialog.dart';
 import 'package:navigation_app/getcoordinates_method.dart';
-    var _currencies = [
-    "Food",
-    "Transport",
-    "Personal",
-    "Shopping",
-    "Medical",
-    "Rent",
-    "Movie",
-    "Salary"
-  ];
+import 'package:navigation_app/gpx_utils.dart';
 
-class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+class MapScreen extends StatefulWidget { // Definicja widżetu typu Stateful (ze stanem).
+  const MapScreen({super.key}); // Konstruktor klasy.
   @override
-  State<MapScreen> createState() => _MapScreenState();
+  State<MapScreen> createState() => _MapScreenState(); // Utworzenie stanu dla widżetu.
 }
 
-class _MapScreenState extends State<MapScreen> {
-  List<LatLng> points = [];
+class _MapScreenState extends State<MapScreen> {// Klasa definiująca stan MapScreen.
+  List<LatLng> points = [];// Lista punktów geograficznych na mapie.
   LatLng? startPoint; // Punkt początkowy
   LatLng? endPoint;   // Punkt końcowy
   LatLng? stop1;      // Pierwszy przystanek
@@ -51,18 +38,19 @@ class _MapScreenState extends State<MapScreen> {
   double? distance; // Dystans w kilometrach
   double? duration; // Czas trwania trasy w minutach
 
-  final MapController mapController = MapController();
-  final TextEditingController startLatController = TextEditingController();
-  final TextEditingController startLngController = TextEditingController();
-  final TextEditingController endLatController = TextEditingController();
-  final TextEditingController endLngController = TextEditingController();
-  final TextEditingController loopDistanceController = TextEditingController();
-  final TextEditingController stop1LatController = TextEditingController();
-  final TextEditingController stop1LngController = TextEditingController();
-  final TextEditingController stop2LatController = TextEditingController();
-  final TextEditingController stop2LngController = TextEditingController();
-  final TextEditingController stop3LatController = TextEditingController();
-  final TextEditingController stop3LngController = TextEditingController();
+   final MapController mapController = MapController(); // Kontroler mapy.
+  final TextEditingController startLatController = TextEditingController(); // Kontroler tekstu dla szerokości punktu początkowego.
+  final TextEditingController startLngController = TextEditingController(); // Kontroler tekstu dla długości punktu początkowego.
+  final TextEditingController endLatController = TextEditingController(); // Kontroler tekstu dla szerokości punktu końcowego.
+  final TextEditingController endLngController = TextEditingController(); // Kontroler tekstu dla długości punktu końcowego.
+  final TextEditingController loopDistanceController = TextEditingController(); // Kontroler tekstu dla dystansu pętli.
+
+  final TextEditingController stop1LatController = TextEditingController(); // Szerokość pierwszego przystanku.
+  final TextEditingController stop1LngController = TextEditingController(); // Długość pierwszego przystanku.
+  final TextEditingController stop2LatController = TextEditingController(); // Szerokość drugiego przystanku.
+  final TextEditingController stop2LngController = TextEditingController(); // Długość drugiego przystanku.
+  final TextEditingController stop3LatController = TextEditingController(); // Szerokość trzeciego przystanku.
+  final TextEditingController stop3LngController = TextEditingController(); // Długość trzeciego przystanku.
 
   // Funkcje zapisujące do pdf i gtx
 Future<void> saveToPdf() async {

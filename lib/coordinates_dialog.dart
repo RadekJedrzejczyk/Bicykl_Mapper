@@ -1,14 +1,16 @@
-import 'package:latlong2/latlong.dart';
-import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';  // Obsługa współrzędnych geograficznych (latitude, longitude).
+import 'package:flutter/material.dart'; // Główna biblioteka do tworzenia aplikacji Flutter.
 
 Future<void> showCoordinatesDialog_body(LatLng? point, String title, dynamic state) async {
     final TextEditingController latController = TextEditingController();
     final TextEditingController lngController = TextEditingController();
 
     if (point != null) {
-      latController.text = point.latitude.toString();
+      latController.text = point.latitude.toString(); // Wyświetlenie istniejącej szerokości geograficznej
       lngController.text = point.longitude.toString();
     }
+
+     // Wyświetlanie okna dialogowego
     await showDialog(
       context: state.context,
       builder: (context) {
@@ -37,9 +39,9 @@ Future<void> showCoordinatesDialog_body(LatLng? point, String title, dynamic sta
             TextButton(
               onPressed: () {
                 state.setState(() {
-                  final lat = double.tryParse(latController.text) ?? 0;
+                  final lat = double.tryParse(latController.text) ?? 0; // Parsowanie szerokości
                   final lng = double.tryParse(lngController.text) ?? 0;
-
+ // Przypisanie współrzędnych w zależności od tytułu okna dialogowego
                   if (title == "Punkt początkowy") {
                     state.startPoint = LatLng(lat, lng);
                   } else if (title == "Punkt końcowy") {

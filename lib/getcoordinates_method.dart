@@ -1,14 +1,13 @@
-import 'package:latlong2/latlong.dart';
-//import 'package:flutter/rendering.dart';
-//import 'package:flutter/services.dart';
-import 'dart:convert';
-import 'package:flutter/material.dart';
-import 'package:navigation_app/api.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';  // Obsługa współrzędnych geograficznych (latitude, longitude).
+import 'dart:convert'; // Import do obsługi konwersji danych w formacie JSON.
+import 'package:flutter/material.dart'; // Główna biblioteka do tworzenia aplikacji Flutter.
+import 'package:http/http.dart' as http; // Do wysyłania żądań HTTP.
+import 'package:flutter_map/flutter_map.dart'; // Biblioteka do renderowania map w aplikacjach Flutter.
+import 'package:navigation_app/api.dart'; // Import niestandardowego pliku API (zawiera nasze metody).
 
-
+// Funkcja do pobrania trasy uwzględniającej przystanki
 Future<void> getCoordinates_body(dynamic state) async {
+  
   if (state.startPoint == null || state.endPoint == null) {
     ScaffoldMessenger.of(state.context).showSnackBar(
       const SnackBar(content: Text('Proszę wprowadzić poprawne współrzędne!')),
@@ -16,6 +15,7 @@ Future<void> getCoordinates_body(dynamic state) async {
     return;
   }
 
+  // Tworzenie listy punktów uwzględniającej przystanki
   List<LatLng> routePoints = [state.startPoint!];
   if (state.stop1 != null) routePoints.add(state.stop1!);
   if (state.stop2 != null) routePoints.add(state.stop2!);
@@ -27,14 +27,17 @@ Future<void> getCoordinates_body(dynamic state) async {
   double totalDuration = 0.0;
 
   try {
+    // Iteracja po parach punktów na trasie
     for (int i = 0; i < routePoints.length - 1; i++) {
-      var start = routePoints[i];
+      var start = routePoints[i]; // Punkt początkowy
       var end = routePoints[i + 1];
       
+      // Formatowanie
       String startStr = '${start.longitude},${start.latitude}';
       String endStr = '${end.longitude},${end.latitude}';
+      //Zapytanie do api
       var response = await http.get(Uri.parse(getRouteUrl(state.selectedProfile, startStr, endStr).toString()));
-
+ // Dekodowanie odpowiedzi 
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
 
@@ -49,7 +52,7 @@ Future<void> getCoordinates_body(dynamic state) async {
         throw Exception('Nie udało się pobrać trasy dla segmentu ${i + 1}');
       }
     }
-
+// Aktualizacja dystansu i czasu
     state.setState(() {
       state.distance = totalDistance;
       state.duration = totalDuration;
