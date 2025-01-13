@@ -1,9 +1,11 @@
 import 'dart:html' as html; // Obsługa funkcji przeglądarki (np. pobieranie plików).
-
+import 'package:flutter/material.dart';
 
 Future<void> saveToGpx_body(dynamic state) async {
-  if (state.points.isEmpty) {
-    print("Brak punktów trasy");
+   if (state.points.isEmpty) {
+    ScaffoldMessenger.of(state.context).showSnackBar(
+      const SnackBar(content: Text('Brak punktów trasy - plików nie wygenerowanoe')),
+    );  // Wyświetlenie komunikatu o błędzie.
     return;
   }
 
