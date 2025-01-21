@@ -1,81 +1,125 @@
-import 'package:pdf/widgets.dart'
-    as pw; // Biblioteka do tworzenia dokumentów PDF.
+import 'package:pdf/widgets.dart' as pw; // Biblioteka do tworzenia dokumentów PDF.
 import 'package:intl/intl.dart'; // Umożliwia formatowanie dat i godzin.
 import 'dart:html' as html;
-import 'snapshot_utils.dart';
-import 'dart:typed_data'; //uint
+import 'dart:typed_data'; // uint
 import 'package:flutter/material.dart';
+import 'snapshot_utils.dart';
 
+// Mapa do tłumaczenia nazw profili rowerowych na język polski
+const Map<String, String> profileNameMap = {
+  'cycling-regular': 'Rower standardowy',
+  'cycling-electric': 'Rower elektryczny',
+  'cycling-mountain': 'Rower górski',
+  'cycling-road': 'Rower szosowy',
+};
+
+// Funkcja zamieniająca polskie znaki na ich odpowiedniki bez znaków diakrytycznych
+String replacePolishCharacters(String text) {
+  Map<String, String> polishToNonPolish = {
+    'ą': 'a',
+    'ć': 'c',
+    'ę': 'e',
+    'ł': 'l',
+    'ń': 'n',
+    'ó': 'o',
+    'ś': 's',
+    'ż': 'z',
+    'ź': 'z',
+    'Ą': 'A',
+    'Ć': 'C',
+    'Ę': 'E',
+    'Ł': 'L',
+    'Ń': 'N',
+    'Ó': 'O',
+    'Ś': 'S',
+    'Ż': 'Z',
+    'Ź': 'Z',
+  };
+  
+  polishToNonPolish.forEach((key, value) {
+    text = text.replaceAll(key, value);
+  });
+  return text;
+}
+
+// Funkcja formatująca czas z minut na format godzin i minut
+String formatDuration(double minutes) {
+  int roundedMinutes = minutes.round(); // Zaokrąglenie minut
+  int hours = roundedMinutes ~/ 60; // Obliczenie godzin
+  int remainingMinutes = roundedMinutes % 60; // Reszta minut
+
+  if (hours > 0) {
+    return '${hours}h ${remainingMinutes} min'; // Format godzin i minut
+  } else {
+    return '${remainingMinutes} min'; // Tylko minuty
+  }
+}
+
+// Funkcja generująca PDF z informacjami o trasie
 Future<void> saveToPdf_body(dynamic state) async {
-  if (state.points.isEmpty) {
+  if (state.routePoints.isEmpty) {
     ScaffoldMessenger.of(state.context).showSnackBar(
-      const SnackBar(
-          content: Text('Brak punktów trasy - plików nie wygenerowanoe')),
-    ); // Wyświetlenie komunikatu o błędzie.
+      const SnackBar(content: Text('Brak punktów trasy - plików nie wygenerowano')),
+    ); // Wyświetlenie komunikatu o błędzie
     return;
   }
 
   final pdf = pw.Document();
-  double? totalDistance =
-      state.distance; // Zmienna przechowująca całkowity dystans
-  Uint8List? mapImage =
-      await Snapshoter.snapshotTarget(state, state.flutterMap);
+  double? totalDistance = state.distance; // Całkowity dystans
+  Uint8List? mapImage = await Snapshoter.snapshotTarget(state, state.flutterMap);
+
+  // Wybór tłumaczenia nazwy profilu rowerowego
+  String bikeProfile = profileNameMap[state.selectedProfile] ?? 'Brak danych';
 
   // Dodawanie treści do pliku PDF
   pdf.addPage(pw.Page(
     build: (pw.Context context) {
       return pw.Column(
-        crossAxisAlignment:
-            pw.CrossAxisAlignment.start, // Wyrównanie elementów do lewej.
+        crossAxisAlignment: pw.CrossAxisAlignment.start, // Wyrównanie elementów do lewej
         children: [
           // 1. Informacje o trasie
           pw.Text(
-            'Wygenerowana Trasa Rowery',
+            replacePolishCharacters('Wygenerowana Trasa'),  // Usunięcie polskich znaków
             style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
           ),
-          pw.SizedBox(height: 10), // Odstęp.
+          pw.SizedBox(height: 10), // Odstęp
           pw.Text(
-            'Data generowania: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}',
+            replacePolishCharacters('Data generowania: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}'),
           ),
-          pw.Text('Profil trasy: Rower szosowy'),
+          pw.Text('Profil roweru: ${replacePolishCharacters(bikeProfile)}'),
           pw.SizedBox(height: 20),
 
           // 2. Szczegóły trasy
           pw.Text(
-            'Plan trasy:',
+            replacePolishCharacters('Plan trasy:'),  // Usunięcie polskich znaków
             style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 10),
 
-          // Lista punktów
+          // Adres startowy
+          if (state.addresses.isNotEmpty)
+            pw.Text(replacePolishCharacters('Adres startowy: ${state.addresses[0]}')),
+
+          // Adresy przystanków
+          if (state.stopAddresses.isNotEmpty) ...[
+            pw.SizedBox(height: 10),
+            for (int i = 0; i < state.stopAddresses.length; i++)
+              pw.Text(replacePolishCharacters('Adres Przystanku ${i + 1}: ${state.stopAddresses[i]}')),
+          ],
+
+          // Adres końcowy, jeśli dostępny
+          if (state.routePoints.isNotEmpty && state.routePoints.length > 1)
+            pw.Text(replacePolishCharacters('Adres końcowy: ${state.addresses.last}')),
           pw.Text(
-              'START: ${state.points[0].latitude}, ${state.points[0].longitude}'),
-          // Lista przystanków, jeśli istnieją
-          if (state.stop1 != null)
-            pw.Text(
-                'Przystanek 1: ${state.stop1!.latitude}, $state.{stop1!.longitude}'),
-          if (state.stop2 != null)
-            pw.Text(
-                'Przystanek 2: ${state.stop2!.latitude}, ${state.stop2!.longitude}'),
-          if (state.stop3 != null)
-            pw.Text(
-                'Przystanek 3: ${state.stop3!.latitude}, ${state.stop3!.longitude}'),
-
-          // Punkt końcowy
-          if (state.endPoint != null)
-            pw.Text(
-                'KONIEC: ${state.endPoint!.latitude}, ${state.endPoint!.longitude}'),
-
+            replacePolishCharacters('Dystans: ${totalDistance?.toStringAsFixed(2) ?? 'Brak danych'} km'),
+          ),
+          
+          // Formatowanie czasu
+          pw.Text(replacePolishCharacters('Czas: ${formatDuration(state.duration)}')),
           pw.SizedBox(height: 20),
-          pw.Text(
-              'Dystans: ${totalDistance?.toStringAsFixed(2) ?? 'Brak danych'} km'),
-          pw.Text(
-              'Czas: ${state.formatDuration(state.duration ?? 0)}'), // Formatowanie czasu
-          pw.SizedBox(height: 20),
-
-          // 3. Mapa trasy
-          pw.Image(pw.MemoryImage(mapImage), // Add the image to the PDF
-              fit: pw.BoxFit.contain)
+          pw.Text(replacePolishCharacters('Mapa trasy:')),
+          if (mapImage != null)
+            pw.Image(pw.MemoryImage(mapImage), fit: pw.BoxFit.contain),
         ],
       );
     },

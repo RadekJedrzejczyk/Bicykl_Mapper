@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart'; // Główna biblioteka do tworzenia aplikacji Flutter.
+import 'package:flutter/material.dart';
 import 'package:navigation_app/map_screen.dart';
 
 void main() {
