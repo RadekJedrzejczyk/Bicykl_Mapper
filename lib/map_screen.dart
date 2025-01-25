@@ -6,6 +6,8 @@ import 'pdf_utils.dart';
 import 'route_generation.dart';
 import 'location_picker.dart';
 import 'api.dart';
+import 'formating_utils.dart';
+import 'gui_elements.dart';
 
 void main() => runApp(const MyApp());
 
@@ -36,15 +38,15 @@ class _MapScreenState extends State<MapScreen> {
   late TextEditingController loopLengthController;
   //inicjalizacja pustych tablic
   List<String> addresses = []; //Lista adresów
-  List<coordinates.LatLng> points = [];
-  List<coordinates.LatLng> routePoints = [];
+  List<coordinates.LatLng> points = []; //początek i koniec
+  List<coordinates.LatLng> routePoints = []; //punkty używane do rysowania trasy
   List<coordinates.LatLng> stops = []; // Lista przystanków
   List<String> stopAddresses = []; // Lista adresów przystanków
   //pozostałe zmienne
   late double distance; //dystans trasy
   late double duration; //czas trwania trasy
   late double loopDistance; // Długość pętli w kilometrach
-  late String selectedProfile = 'cycling-regular'; // wybrany rodzaj roweru
+  late String selectedProfile; // wybrany rodzaj roweru
   late Map<String, String> profiles; // wszystkie dostępne rodzaje rowerów
 
 //inicjalizacja wartości domyślnych
@@ -63,7 +65,7 @@ class _MapScreenState extends State<MapScreen> {
       'cycling-road': 'Rower szosowy',
     };
     //punkt początkowy - Gliwice
-    points.add(coordinates.LatLng(50.29761, 18.67658));
+    points.add(const coordinates.LatLng(50.29761, 18.67658));
     reverseGeocode(points[0].latitude, points[0].longitude).then((address) {
       setState(() {
         addresses.add(address);
@@ -81,21 +83,6 @@ class _MapScreenState extends State<MapScreen> {
     super.dispose();
   }
 
-  String formatDuration(double minutes) {
-    int roundedMinutes =
-        minutes.round(); // Round the value to the nearest integer
-    int hours = roundedMinutes ~/ 60; // Calculate hours
-    int remainingMinutes =
-        roundedMinutes % 60; // Calculate the remaining minutes
-
-    if (hours > 0) {
-      // jeśli czas poniżej godziny to wyświetl tylko minuty
-      return '$hours h $remainingMinutes min';
-    } else {
-      return '$remainingMinutes min';
-    }
-  }
-
 // Funkcja pomocnicza do zebrania szczegółów trasy -> route_generation.dart
   Future<void> generateRoute() async {
     generateRoute_body(this);
@@ -104,6 +91,46 @@ class _MapScreenState extends State<MapScreen> {
 //Metoda tworząca pętle -> route_generation.dart
   Future<void> generateLoop() async {
     generateLoop_body(this);
+  }
+
+  Future<void> showAddStopWidget() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const LocationPicker(),
+      ),
+    );
+    if (result != null && result is Map<String, dynamic>) {
+      setState(() {
+        stops.add(result['point']);
+        stopAddresses.add(result['address']);
+      });
+    }
+  }
+
+  Future<void> fitMapCamera() async {
+    LatLngBounds bounds = LatLngBounds.fromPoints(routePoints);
+    mapController.fitCamera(CameraFit.bounds(bounds: bounds));
+  }
+
+  Future<void> clearState() async {
+    setState(() {
+      points.clear();
+      addresses.clear();
+      stops.clear();
+      stopAddresses.clear();
+      routePoints.clear();
+      distance = 0.0;
+      duration = 0.0;
+    });
+  }
+
+  Future<void> saveToGpx() async {
+    saveToGpx_body(this);
+  }
+
+  Future<void> saveToPdf() async {
+    saveToPdf_body(this);
   }
 
   @override
@@ -119,15 +146,15 @@ class _MapScreenState extends State<MapScreen> {
       ),
       body: Row(
         children: [
-          // Left panel for controls and information
+          // Lewy panel
           Flexible(
-            flex: 3, // Adjust flex ratio for desired width
+            flex: 3,
             child: Padding(
               padding: const EdgeInsets.all(10.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Information about route, stops, and distance
+                  // Wyświetlanie informacji o przystankach itp.
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6.0),
                     child: Card(
@@ -177,7 +204,7 @@ class _MapScreenState extends State<MapScreen> {
                                       color: Colors.orange, size: 12),
                                   const SizedBox(width: 6.0),
                                   Text(
-                                    "Czas: ${formatDuration(duration)}",
+                                    "Czas: ${minutesToHours(duration)}",
                                     style: const TextStyle(fontSize: 10),
                                   ),
                                 ],
@@ -189,41 +216,10 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                   // Button for adding stops
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 6.0),
-                    child: ElevatedButton(
-                      onPressed: points.length >= 2
-                          ? () async {
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LocationPicker(),
-                                ),
-                              );
-                              if (result != null &&
-                                  result is Map<String, dynamic>) {
-                                setState(() {
-                                  stops.add(result['point']);
-                                  stopAddresses.add(result['address']);
-                                });
-                              }
-                            }
-                          : null,
-                      child: const Text("Dodaj przystanek"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(0),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 12.0, horizontal: 20.0),
-                        textStyle: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Profile selection buttons
+                      padding: const EdgeInsets.only(bottom: 6.0),
+                      child: createElevatedButton(context, "Dodaj przystanek",
+                          points.length >= 2, showAddStopWidget, Colors.green)),
+                  // Wybieranie rodzaju roweru
                   const Padding(
                     padding: EdgeInsets.only(bottom: 6.0),
                     child: Text(
@@ -310,142 +306,35 @@ class _MapScreenState extends State<MapScreen> {
                           ),
                         ),
                         //przycisk - generuj trasę
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20.0),
-                            ),
-                            elevation: 4,
-                            minimumSize: const Size(100, 30),
-                          ),
-                          onPressed: points.length >= 2 ? generateRoute : null,
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10.0, vertical: 6.0),
-                            child: Text(
-                              "Generuj trasę",
-                              style: TextStyle(fontSize: 10),
-                            ),
-                          ),
-                        ),
+                        createElevatedButton(
+                            context,
+                            "Generuj trasę",
+                            points.length >= 2,
+                            generateRoute,
+                            Colors.blueAccent),
                         //przycisk - generuj pętle
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.purpleAccent,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20.0),
-                            ),
-                            elevation: 4,
-                            minimumSize: const Size(100, 30),
-                          ),
-                          onPressed: points.length == 1 ? generateLoop : null,
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10.0, vertical: 6.0),
-                            child: Text(
-                              "Generuj pętlę",
-                              style: TextStyle(fontSize: 10),
-                            ),
-                          ),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.redAccent,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20.0),
-                            ),
-                            elevation: 4,
-                            minimumSize: const Size(100, 30),
-                          ),
-                          onPressed: points.isNotEmpty
-                              ? () {
-                                  setState(() {
-                                    points.clear();
-                                    addresses.clear();
-                                    stops.clear();
-                                    stopAddresses.clear();
-                                    routePoints.clear();
-                                    distance = 0.0;
-                                    duration = 0.0;
-                                  });
-                                }
-                              : null,
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10.0, vertical: 6.0),
-                            child: Text(
-                              "Usuń dane",
-                              style: TextStyle(fontSize: 10),
-                            ),
-                          ),
-                        ),
+                        createElevatedButton(
+                            context,
+                            "Generuj pętlę",
+                            points.length == 1,
+                            generateLoop,
+                            Colors.purpleAccent),
+                        //przycisk do usuwania
+                        createElevatedButton(context, "Usuń dane",
+                            points.isNotEmpty, clearState, Colors.redAccent)
                       ],
                     ),
                   ),
-                  // Button to save the GPX file
+                  // Przycisku zapisu do PDF oraz GPX
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6.0),
                     child: Row(
                       children: [
-                        // Przycisk do zapisania GPX
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20.0),
-                            ),
-                            elevation: 4,
-                            minimumSize: const Size(100, 30),
-                          ),
-                          onPressed: points.isNotEmpty
-                              ? () async {
-                                  await saveToGpx_body(
-                                      this); // Funkcja zapisu jako GPX
-                                }
-                              : null,
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10.0, vertical: 6.0),
-                            child: Text(
-                              "Zapisz jako GPX",
-                              style: TextStyle(fontSize: 10),
-                            ),
-                          ),
-                        ),
-
+                        createElevatedButton(context, "Zapisz jako GPX",
+                            points.isNotEmpty, saveToGpx, Colors.orange),
                         const SizedBox(width: 10), // Odstęp między przyciskami
-
-                        // Przycisk do zapisania PDF
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue, // Można zmienić kolor
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20.0),
-                            ),
-                            elevation: 4,
-                            minimumSize: const Size(100, 30),
-                          ),
-                          onPressed: points.isNotEmpty
-                              ? () async {
-                                  await saveToPdf_body(
-                                      this); // Funkcja zapisu jako PDF
-                                }
-                              : null,
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10.0, vertical: 6.0),
-                            child: Text(
-                              "Zapisz jako PDF",
-                              style: TextStyle(fontSize: 10),
-                            ),
-                          ),
-                        ),
+                        createElevatedButton(context, "Zapisz jako PDF",
+                            points.isNotEmpty, saveToPdf, Colors.blue)
                       ],
                     ),
                   ),
@@ -459,6 +348,7 @@ class _MapScreenState extends State<MapScreen> {
             child: Stack(
               children: [
                 flutterMap = FlutterMap(
+                  mapController: mapController,
                   options: MapOptions(
                     initialCenter: coordinates.LatLng(50.292961, 18.668930),
                     initialZoom: 11,
@@ -510,31 +400,31 @@ class _MapScreenState extends State<MapScreen> {
                     ),
                   ],
                 ),
+                //przycisk wyboru lokacji
                 Positioned(
                   bottom: 20.0,
                   left: 12.0,
                   child: FloatingActionButton(
-                    onPressed: points.length < 2
-                        ? () async {
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const LocationPicker(),
-                              ),
-                            );
-                            if (result != null &&
-                                result is Map<String, dynamic>) {
-                              setState(() {
-                                points.add(result['point']);
-                                addresses.add(result['address']);
-                              });
+                      onPressed: points.length < 2
+                          ? () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LocationPicker(),
+                                ),
+                              );
+                              if (result != null &&
+                                  result is Map<String, dynamic>) {
+                                setState(() {
+                                  points.add(result['point']);
+                                  addresses.add(result['address']);
+                                });
+                              }
                             }
-                          }
-                        : null,
-                    child: const Icon(Icons.add_location),
-                    backgroundColor:
-                        points.length < 2 ? Colors.blue : Colors.grey,
-                  ),
+                          : null,
+                      backgroundColor:
+                          points.length < 2 ? Colors.blue : Colors.grey,
+                      child: const Icon(Icons.add_location)),
                 ),
               ],
             ),

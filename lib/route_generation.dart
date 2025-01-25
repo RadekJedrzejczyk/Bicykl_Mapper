@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:math';
 import 'api.dart';
+import 'formating_utils.dart';
 
 Future<void> generateRoute_body(dynamic state) async {
   if (state.points.isNotEmpty) {
@@ -22,10 +23,8 @@ Future<void> generateRoute_body(dynamic state) async {
       final startPoint = allStops[i];
       final endPoint = allStops[i + 1];
 
-      final url = getRouteUrl(
-          state.selectedProfile,
-          '${startPoint.longitude},${startPoint.latitude}',
-          '${endPoint.longitude},${endPoint.latitude}');
+      final url = getRouteUrl(state.selectedProfile, pointToString(startPoint),
+          pointToString(endPoint));
 
       var response = await http.get(url);
 
@@ -59,6 +58,7 @@ Future<void> generateRoute_body(dynamic state) async {
       state.routePoints = routePointsTemp;
       state.distance = totalDistance;
       state.duration = totalDuration;
+      state.fitMapCamera();
     });
   } else {
     ScaffoldMessenger.of(state.context).showSnackBar(
@@ -70,23 +70,6 @@ Future<void> generateRoute_body(dynamic state) async {
 Future<void> generateLoop_body(dynamic state) async {
   if (state.points.length == 1) {
     final startPoint = state.points[0];
-
-    // Funkcja pomocnicza do losowania punktu w spiralnym układzie
-    coordinates.LatLng generateSpiralPoint(
-        coordinates.LatLng center, double radius, double angle) {
-      const double earthRadiusKm = 6371.0; // Promień Ziemi
-      double angleInRadians = angle * pi / 180;
-
-      // Ustalanie przesunięcia w kierunku radialnym
-      double dx = radius * cos(angleInRadians);
-      double dy = radius * sin(angleInRadians);
-
-      // Nowe współrzędne
-      double lat = center.latitude + (dy / earthRadiusKm) * (180 / pi);
-      double lng = center.longitude +
-          (dx / earthRadiusKm) * (180 / pi) / cos(center.latitude * pi / 180);
-      return coordinates.LatLng(lat, lng);
-    }
 
     // Generowanie punktów spiralnych
     List<coordinates.LatLng> spiralPoints = [];
@@ -103,7 +86,7 @@ Future<void> generateLoop_body(dynamic state) async {
 
       // Upewnij się, że punkt nie znajduje się zbyt blisko poprzedniego
       if (i == 0 ||
-          checkIfValidDistance(
+          checkMinimumSeparation(
               spiralPoints.last, spiralPoint, state.loopDistance / 10)) {
         spiralPoints.add(spiralPoint);
 
@@ -127,11 +110,8 @@ Future<void> generateLoop_body(dynamic state) async {
     for (int i = 0; i < spiralPoints.length; i++) {
       coordinates.LatLng nextPoint = spiralPoints[i];
 
-      final urlToNextPoint = getRouteUrl(
-        state.selectedProfile,
-        '${currentPoint.longitude},${currentPoint.latitude}',
-        '${nextPoint.longitude},${nextPoint.latitude}',
-      );
+      final urlToNextPoint = getRouteUrl(state.selectedProfile,
+          pointToString(currentPoint), pointToString(nextPoint));
       final responseToNextPoint = await http.get(urlToNextPoint);
 
       if (responseToNextPoint.statusCode == 200) {
@@ -155,12 +135,10 @@ Future<void> generateLoop_body(dynamic state) async {
         return;
       }
     }
+
     // Na koniec wyznacz trasę do punktu początkowego, aby zakończyć spiralę
-    final urlToStart = getRouteUrl(
-      state.selectedProfile,
-      '${currentPoint.longitude},${currentPoint.latitude}',
-      '${startPoint.longitude},${startPoint.latitude}',
-    );
+    final urlToStart = getRouteUrl(state.selectedProfile,
+        pointToString(currentPoint), pointToString(startPoint));
     final responseToStart = await http.get(urlToStart);
 
     if (responseToStart.statusCode == 200) {
@@ -196,6 +174,7 @@ Future<void> generateLoop_body(dynamic state) async {
         state.distance = totalDistance; // Przypisujemy całkowitą długość trasy
         state.duration =
             allRoutePoints.fold(0, (sum, route) => sum + route.length) / 60;
+        state.fitMapCamera();
       });
     } else {
       ScaffoldMessenger.of(state.context).showSnackBar(const SnackBar(
@@ -206,6 +185,23 @@ Future<void> generateLoop_body(dynamic state) async {
     ScaffoldMessenger.of(state.context).showSnackBar(
         const SnackBar(content: Text('Proszę dodać dokładnie jeden punkt.')));
   }
+}
+
+// Funkcja pomocnicza do losowania punktu w spiralnym układzie
+coordinates.LatLng generateSpiralPoint(
+    coordinates.LatLng center, double radius, double angle) {
+  const double earthRadiusKm = 6371.0; // Promień Ziemi
+  double angleInRadians = angle * pi / 180;
+
+  // Ustalanie przesunięcia w kierunku radialnym
+  double dx = radius * cos(angleInRadians);
+  double dy = radius * sin(angleInRadians);
+
+  // Nowe współrzędne
+  double lat = center.latitude + (dy / earthRadiusKm) * (180 / pi);
+  double lng = center.longitude +
+      (dx / earthRadiusKm) * (180 / pi) / cos(center.latitude * pi / 180);
+  return coordinates.LatLng(lat, lng);
 }
 
 // Funkcja pomocnicza do obliczania odległości między dwoma punktami geograficznymi
@@ -229,7 +225,7 @@ bool isDistanceValid(double totalDistance, double expectedDistance) {
       totalDistance >= expectedDistance * (1 - tolerance);
 }
 
-bool checkIfValidDistance(
+bool checkMinimumSeparation(
     coordinates.LatLng p1, coordinates.LatLng p2, double minDistanceKm) {
   double distance = calculateDistance(p1, p2);
   return distance >= minDistanceKm;
