@@ -103,6 +103,7 @@ Future<void> generateLoop_body(dynamic state) async {
 
     // Na tym etapie mamy już wygenerowane punkty spiralne
     double totalDistance = 0;
+    double totalTime = 0;
     List<List<coordinates.LatLng>> allRoutePoints = [];
     coordinates.LatLng currentPoint = startPoint;
 
@@ -126,6 +127,9 @@ Future<void> generateLoop_body(dynamic state) async {
         totalDistance += dataToNextPoint['features'][0]['properties']
                 ['segments'][0]['distance'] /
             1000;
+        totalTime = dataToNextPoint['features'][0]['properties']['segments'][0]
+                ['duration'] /
+            60;
 
         // Aktualizuj bieżący punkt
         currentPoint = nextPoint;
@@ -153,12 +157,14 @@ Future<void> generateLoop_body(dynamic state) async {
       totalDistance += dataToStart['features'][0]['properties']['segments'][0]
               ['distance'] /
           1000;
+      totalTime += dataToStart['features'][0]['properties']['segments'][0]
+              ['duration'] /
+          60;
 
       double expectedDistance = state.loopDistance;
 
       // Sprawdzamy, czy całkowity dystans jest odpowiedni
       if (!isDistanceValid(totalDistance, expectedDistance)) {
-        // Jeśli dystans jest za długi lub za krótki, zaczynamy generowanie punktów od nowa
         ScaffoldMessenger.of(state.context).showSnackBar(
           const SnackBar(
               content: Text(
@@ -172,9 +178,7 @@ Future<void> generateLoop_body(dynamic state) async {
       state.setState(() {
         state.routePoints = allRoutePoints.expand((x) => x).toList();
         state.distance = totalDistance; // Przypisujemy całkowitą długość trasy
-        state.duration =
-            allRoutePoints.fold(0, (sum, route) => sum + route.length) / 60;
-        state.fitMapCamera();
+        state.duration = totalTime;
       });
     } else {
       ScaffoldMessenger.of(state.context).showSnackBar(const SnackBar(

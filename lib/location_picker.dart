@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as coordinates;
 import 'api.dart';
+import 'gui_elements.dart';
 
 class LocationPicker extends StatefulWidget {
   const LocationPicker({super.key});
@@ -12,7 +13,28 @@ class LocationPicker extends StatefulWidget {
 
 class _LocationPickerState extends State<LocationPicker> {
   coordinates.LatLng? selectedPoint;
-  String? address;
+  late String? address;
+
+//wartości domyślne
+  @override
+  void initState() {
+    super.initState();
+    selectedPoint = const coordinates.LatLng(50.292961, 18.668930);
+    reverseGeocode(50.292961, 18.668930).then((adres) {
+      setState(() {
+        address = adres;
+      });
+    });
+  }
+
+  Future<void> popNavigator() async {
+    if (selectedPoint != null && address != null) {
+      Navigator.pop(context, {
+        'point': selectedPoint,
+        'address': address,
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,33 +51,12 @@ class _LocationPickerState extends State<LocationPicker> {
             flex: 10,
             child: _osmWidget(),
           ),
-          ElevatedButton(
-            onPressed: () async {
-              if (selectedPoint != null && address != null) {
-                Navigator.pop(context, {
-                  'point': selectedPoint,
-                  'address': address,
-                });
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white, // Kolor tła przycisku
-              foregroundColor: Colors.black, // Kolor tekstu
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30.0), // Zaokrąglone rogi
-              ),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 35.0, vertical: 12.0), // Padding wewnętrzny
-              elevation: 5, // Dodanie cienia
-            ),
-            child: const Text(
-              'Zakończ wybór',
-              style: TextStyle(
-                fontSize: 14, // Zwiększona czcionka
-                fontWeight: FontWeight.bold, // Pogrubienie tekstu
-              ),
-            ),
-          ),
+          createElevatedButton(
+              context, 'Zakończ wybór', true, popNavigator, Colors.white,
+              foregroundColor: Colors.black,
+              fontSize: 14,
+              horizontalTextPadding: 35,
+              verticalTextPadding: 12)
         ],
       ),
     );
