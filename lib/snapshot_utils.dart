@@ -5,24 +5,25 @@ import 'package:flutter/material.dart';
 class Snapshoter {
   static Future<Uint8List> snapshotTarget(
       dynamic state, dynamic toScreenshot) async {
-    ScreenshotController screenshotController = ScreenshotController();
-    BuildContext context = state.context;
+    try {
+      ScreenshotController screenshotController = ScreenshotController();
+      BuildContext context = state.context;
 
-    // Capture the screenshot asynchronously
-    Uint8List? capturedImage = await screenshotController.captureFromWidget(
-      InheritedTheme.captureAll(
-        context,
-        Material(child: toScreenshot),
-      ),
-      delay: Duration(milliseconds: 100),
-      context: context,
-    );
+      // Capture the screenshot asynchronously
+      Uint8List? capturedImage = await screenshotController.captureFromWidget(
+        InheritedTheme.captureAll(
+          context,
+          Material(child: toScreenshot),
+        ),
+        delay: Duration(milliseconds: 100),
+        context: context,
+      );
 
-    if (capturedImage != null) {
       return capturedImage;
-    } else {
-      // Handle error or return a default value
-      throw 'Error capturing screenshot';
+    } catch (e) {
+      ScaffoldMessenger.of(state.context).showSnackBar(SnackBar(
+          content: Text('Niespodziewany błąd zrzutu ekranu: $e.message')));
+      throw Exception('Błąd zrzutu ekranu: $e');
     }
   }
 }

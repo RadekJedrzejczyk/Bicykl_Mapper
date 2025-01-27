@@ -1,20 +1,16 @@
 import 'package:pdf/widgets.dart'
     as pw; // Biblioteka do tworzenia dokumentów PDF.
-import 'package:intl/intl.dart'; // Umożliwia formatowanie dat i godzin.
-import 'dart:html' as html;
+import 'package:intl/intl.dart';
+import 'package:universal_html/html.dart' as html;
 import 'formating_utils.dart';
 import 'dart:typed_data'; // uint
-import 'package:flutter/material.dart';
 import 'snapshot_utils.dart';
 import 'package:printing/printing.dart';
 
 // Funkcja generująca PDF z informacjami o trasie
 Future<void> saveToPdf_body(dynamic state) async {
   if (state.routePoints.isEmpty) {
-    ScaffoldMessenger.of(state.context).showSnackBar(
-      const SnackBar(content: Text('Brak trasy - nie wygenerowano pliku pdf')),
-    ); // Wyświetlenie komunikatu o błędzie
-    return;
+    throw StateError('Brak trasy - nie wygenerowano pliku pdf');
   }
 
   final font = await PdfGoogleFonts.notoSansRegular();
@@ -81,8 +77,8 @@ Future<void> saveToPdf_body(dynamic state) async {
           pw.Text('Czas: ${minutesToHours(state.duration)}'),
           pw.SizedBox(height: 20),
           pw.Text('Mapa trasy:'),
-          if (mapImage != null)
-            pw.Image(pw.MemoryImage(mapImage), fit: pw.BoxFit.contain),
+
+          pw.Image(pw.MemoryImage(mapImage), fit: pw.BoxFit.contain),
         ],
       );
     },

@@ -1,12 +1,10 @@
-import 'dart:html' as html; // Obsługa funkcji przeglądarki (np. pobieranie plików).
-import 'package:flutter/material.dart';
+import 'package:universal_html/html.dart'
+    as html; // Obsługa funkcji przeglądarki (np. pobieranie plików).
 
 Future<void> saveToGpx_body(dynamic state) async {
   if (state.routePoints.isEmpty) {
-    ScaffoldMessenger.of(state.context).showSnackBar(
-      const SnackBar(content: Text('Brak punktów trasy - plików nie wygenerowanoe')),
-    );  // Wyświetlenie komunikatu o błędzie.
-    return;
+    throw StateError(
+        'Nie można wygenerować trasy. - Proszę dodać dwa punkty na mapie.');
   }
 
   // Tworzenie struktury XML GPX
@@ -33,11 +31,14 @@ Future<void> saveToGpx_body(dynamic state) async {
 </gpx>''';
 
   // Tworzenie pliku GPX do pobrania w przeglądarce
-  final blob = html.Blob([gpxContent], 'application/gpx+xml'); // Tworzenie obiektu zawierającego dane GPX.
-  final url = html.Url.createObjectUrlFromBlob(blob); // Generowanie tymczasowego URL dla pliku.
-  final anchor = html.AnchorElement(href: url)  // Tworzenie elementu HTML do pobrania.
-    ..target = 'blank' // Otwórz w nowej karcie.
-    ..download = 'route.gpx' // Nazwa pliku do pobrania.
-    ..click(); // Symulowanie kliknięcia (rozpoczęcie pobierania).
+  final blob = html.Blob([gpxContent],
+      'application/gpx+xml'); // Tworzenie obiektu zawierającego dane GPX.
+  final url = html.Url.createObjectUrlFromBlob(
+      blob); // Generowanie tymczasowego URL dla pliku.
+  final anchor =
+      html.AnchorElement(href: url) // Tworzenie elementu HTML do pobrania.
+        ..target = 'blank' // Otwórz w nowej karcie.
+        ..download = 'route.gpx' // Nazwa pliku do pobrania.
+        ..click(); // Symulowanie kliknięcia (rozpoczęcie pobierania).
   html.Url.revokeObjectUrl(url); // Usunięcie URL po zakończeniu
 }

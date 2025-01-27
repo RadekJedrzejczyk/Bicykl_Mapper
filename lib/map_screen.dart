@@ -8,6 +8,7 @@ import 'location_picker.dart';
 import 'api.dart';
 import 'formating_utils.dart';
 import 'gui_elements.dart';
+import 'dart:io';
 
 void main() => runApp(const MyApp());
 
@@ -17,7 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Map App',
+      title: 'BICYCLE NAVIGATION APP',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const MapScreen(),
     );
@@ -85,12 +86,34 @@ class _MapScreenState extends State<MapScreen> {
 
 // Funkcja pomocnicza do zebrania szczegółów trasy -> route_generation.dart
   Future<void> generateRoute() async {
-    generateRoute_body(this);
+    try {
+      await generateRoute_body(this);
+    } on StateError catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
+    } on HttpException catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Błąd odpowiedzi: $e.message')));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Niespodziewany błąd: $e.message')));
+    }
   }
 
 //Metoda tworząca pętle -> route_generation.dart
   Future<void> generateLoop() async {
-    generateLoop_body(this);
+    try {
+      await generateLoop_body(this);
+    } on StateError catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
+    } on HttpException catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Błąd odpowiedzi: $e')));
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Niespodziewany błąd: $e')));
+    }
   }
 
   Future<void> showAddStopWidget() async {
@@ -126,11 +149,27 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> saveToGpx() async {
-    saveToGpx_body(this);
+    try {
+      saveToGpx_body(this);
+    } on StateError catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Niespodziewany błąd: $e.message')));
+    }
   }
 
   Future<void> saveToPdf() async {
-    saveToPdf_body(this);
+    try {
+      saveToPdf_body(this);
+    } on StateError catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Niespodziewany błąd: $e.message')));
+    }
   }
 
   @override
@@ -149,93 +188,99 @@ class _MapScreenState extends State<MapScreen> {
           // Lewy panel
           Flexible(
             flex: 3,
-            child: Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Wyświetlanie informacji o przystankach itp.
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 6.0),
-                    child: Card(
-                      elevation: 3,
-                      color: Colors.blue[50],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6.0),
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(6.0),
-                        title: Text(
-                          "Start: ${addresses.isNotEmpty ? addresses[0] : ''}\n"
-                          "Koniec: ${addresses.length > 1 ? addresses[1] : ''}",
-                          style: const TextStyle(fontSize: 10),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (stops.isNotEmpty) ...[
-                              const SizedBox(height: 6.0),
-                              const Text(
-                                "Przystanki:",
-                                style: TextStyle(
-                                    fontSize: 10, fontWeight: FontWeight.bold),
-                              ),
-                              ...stopAddresses.map((stopAddress) => Text(
-                                    stopAddress,
-                                    style: const TextStyle(fontSize: 10),
-                                  )),
-                            ],
-                            if (distance > 0.0 || duration > 0.0)
-                              Row(
-                                children: [
-                                  const Icon(Icons.directions_bike,
-                                      color: Colors.green, size: 12),
-                                  const SizedBox(width: 6.0),
-                                  Text(
-                                    "Dystans: ${distance.toStringAsFixed(2)} km",
-                                    style: const TextStyle(fontSize: 10),
-                                  ),
-                                ],
-                              ),
-                            if (distance > 0.0 || duration > 0.0)
-                              Row(
-                                children: [
-                                  const Icon(Icons.access_time,
-                                      color: Colors.orange, size: 12),
-                                  const SizedBox(width: 6.0),
-                                  Text(
-                                    "Czas: ${minutesToHours(duration)}",
-                                    style: const TextStyle(fontSize: 10),
-                                  ),
-                                ],
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Button for adding stops
-                  Padding(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Wyświetlanie informacji o przystankach itp.
+                    Padding(
                       padding: const EdgeInsets.only(bottom: 6.0),
-                      child: createElevatedButton(context, "Dodaj przystanek",
-                          points.length >= 2, showAddStopWidget, Colors.green)),
-                  // Wybieranie rodzaju roweru
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 6.0),
-                    child: Text(
-                      "Wybierz profil roweru",
-                      style:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                      child: Card(
+                        elevation: 3,
+                        color: Colors.blue[50],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6.0),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(6.0),
+                          title: Text(
+                            "Start: ${addresses.isNotEmpty ? addresses[0] : ''}\n"
+                            "Koniec: ${addresses.length > 1 ? addresses[1] : ''}",
+                            style: const TextStyle(fontSize: 10),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (stops.isNotEmpty) ...[
+                                const SizedBox(height: 6.0),
+                                const Text(
+                                  "Przystanki:",
+                                  style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                ...stopAddresses.map((stopAddress) => Text(
+                                      stopAddress,
+                                      style: const TextStyle(fontSize: 10),
+                                    )),
+                              ],
+                              if (distance > 0.0 || duration > 0.0)
+                                Row(
+                                  children: [
+                                    const Icon(Icons.directions_bike,
+                                        color: Colors.green, size: 12),
+                                    const SizedBox(width: 6.0),
+                                    Text(
+                                      "Dystans: ${distance.toStringAsFixed(2)} km",
+                                      style: const TextStyle(fontSize: 10),
+                                    ),
+                                  ],
+                                ),
+                              if (distance > 0.0 || duration > 0.0)
+                                Row(
+                                  children: [
+                                    const Icon(Icons.access_time,
+                                        color: Colors.orange, size: 12),
+                                    const SizedBox(width: 6.0),
+                                    Text(
+                                      "Czas: ${minutesToHours(duration)}",
+                                      style: const TextStyle(fontSize: 10),
+                                    ),
+                                  ],
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: profiles.entries.map((entry) {
-                        bool isSelected = selectedProfile == entry.key;
-                        return Expanded(
-                          child: GestureDetector(
+                    // Button for adding stops
+                    Padding(
+                        padding: const EdgeInsets.only(bottom: 6.0),
+                        child: createElevatedButton(
+                            context,
+                            "Dodaj przystanek",
+                            points.length >= 2,
+                            showAddStopWidget,
+                            Colors.green)),
+                    // Wybieranie rodzaju roweru
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 6.0),
+                      child: Text(
+                        "Wybierz profil roweru",
+                        style: TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Wrap(
+                        spacing: 8.0,
+                        runSpacing: 8.0,
+                        children: profiles.entries.map((entry) {
+                          bool isSelected = selectedProfile == entry.key;
+                          return GestureDetector(
                             onTap: () {
                               setState(() {
                                 selectedProfile = entry.key;
@@ -269,23 +314,20 @@ class _MapScreenState extends State<MapScreen> {
                                 ),
                               ),
                             ),
-                          ),
-                        );
-                      }).toList(),
+                          );
+                        }).toList(),
+                      ),
                     ),
-                  ),
-                  // Generate and clear buttons
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(
-                          flex: 2,
-                          //wprowadzanie długości pętli
-                          child: TextField(
+                    // Generate and clear buttons
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6.0),
+                      child: Wrap(
+                        spacing: 8.0,
+                        runSpacing: 4.0,
+                        children: [
+                          TextField(
                             decoration: const InputDecoration(
-                              labelText: '(km)',
+                              labelText: 'długość pętli(km)',
                               labelStyle: TextStyle(fontSize: 10),
                               border: OutlineInputBorder(),
                               contentPadding: EdgeInsets.symmetric(
@@ -304,41 +346,44 @@ class _MapScreenState extends State<MapScreen> {
                                   10, // Zmieniono wielkość czcionki na mniejszą
                             ),
                           ),
-                        ),
-                        //przycisk - generuj trasę
-                        createElevatedButton(
-                            context,
-                            "Generuj trasę",
-                            points.length >= 2,
-                            generateRoute,
-                            Colors.blueAccent),
-                        //przycisk - generuj pętle
-                        createElevatedButton(
-                            context,
-                            "Generuj pętlę",
-                            points.length == 1,
-                            generateLoop,
-                            Colors.purpleAccent),
-                        //przycisk do usuwania
-                        createElevatedButton(context, "Usuń dane",
-                            points.isNotEmpty, clearState, Colors.redAccent)
-                      ],
+
+                          //przycisk - generuj trasę
+                          createElevatedButton(
+                              context,
+                              "Generuj trasę",
+                              points.length >= 2,
+                              generateRoute,
+                              Colors.blueAccent),
+                          //przycisk - generuj pętle
+                          createElevatedButton(
+                              context,
+                              "Generuj pętlę",
+                              points.length == 1,
+                              generateLoop,
+                              Colors.purpleAccent),
+                          //przycisk do usuwania
+                          createElevatedButton(context, "Usuń dane",
+                              points.isNotEmpty, clearState, Colors.redAccent)
+                        ],
+                      ),
                     ),
-                  ),
-                  // Przycisku zapisu do PDF oraz GPX
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6.0),
-                    child: Row(
-                      children: [
-                        createElevatedButton(context, "Zapisz jako GPX",
-                            points.isNotEmpty, saveToGpx, Colors.orange),
-                        const SizedBox(width: 10), // Odstęp między przyciskami
-                        createElevatedButton(context, "Zapisz jako PDF",
-                            points.isNotEmpty, saveToPdf, Colors.blue)
-                      ],
+                    // Przycisku zapisu do PDF oraz GPX
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6.0),
+                      child: Wrap(
+                        spacing: 4.0,
+                        runSpacing: 4.0,
+                        children: [
+                          createElevatedButton(context, "Zapisz jako GPX",
+                              points.isNotEmpty, saveToGpx, Colors.orange),
+                          const SizedBox(width: 2), // Odstęp między przyciskami
+                          createElevatedButton(context, "Zapisz jako PDF",
+                              points.isNotEmpty, saveToPdf, Colors.blue)
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 
 const String baseUrl =
@@ -19,21 +20,35 @@ Uri getRouteUrl(String profile, String startPoint, String endPoint) {
 /// Funkcja do geokodowania wstecznego (zamiana współrzędnych na adres)
 Future<String> reverseGeocode(double latitude, double longitude) async {
   // URL API geokodowania wstecznego
-  final uri = Uri.parse(
-      '$baseUrl2?api_key=$apiKey2&point.lon=$longitude&point.lat=$latitude');
+  try {
+    final uri = Uri.parse(
+        '$baseUrl2?api_key=$apiKey2&point.lon=$longitude&point.lat=$latitude');
 
-  final response = await http.get(uri);
+    final response = await http.get(uri);
 
-  if (response.statusCode == 200) {
+    checkResponseCode(response);
+
     var data = jsonDecode(response.body);
 
-    if (data['features'] != null && data['features'].isNotEmpty) {
-      var address = data['features'][0]['properties']['label'];
-      return address; // Zwracamy adres
-    } else {
-      return 'Adres nieznany';
+    if (data['features'] == null || data['features'].isEmpty) {
+      throw Exception('Adres nieznany');
     }
-  } else {
-    throw Exception('Nie udało się pobrać adresu');
+
+    var address = data['features'][0]['properties']['label'];
+    return address;
+  } on HttpException catch (e) {
+    return 'Błąd odpowiedzi: $e';
+  } on Exception catch (e) {
+    return '$e';
+  } catch (e) {
+    return 'Niespodziewany błąd: $e.message';
+  }
+}
+
+void checkResponseCode(http.Response response) {
+  if (response.statusCode != 200) {
+    throw HttpException(
+      '${response.statusCode}, body: ${response.body}',
+    );
   }
 }

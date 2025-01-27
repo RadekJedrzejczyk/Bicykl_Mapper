@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart' as coordinates;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -7,68 +6,64 @@ import 'api.dart';
 import 'formating_utils.dart';
 
 Future<void> generateRoute_body(dynamic state) async {
-  if (state.points.isNotEmpty) {
-    final coordinates.LatLng start = state.points[0];
-    final coordinates.LatLng end =
-        state.points[state.points.length - 1]; // Ostatni punkt to koniec
-    final List<coordinates.LatLng> stopsMap = state.stops;
-    List<coordinates.LatLng> routePointsTemp = []; //temporary
-    double totalDistance = 0.0;
-    double totalDuration = 0.0;
-
-    // Jeżeli mamy przynajmniej jeden przystanek
-    List<coordinates.LatLng> allStops = [start] + stopsMap + [end];
-
-    for (int i = 0; i < allStops.length - 1; i++) {
-      final startPoint = allStops[i];
-      final endPoint = allStops[i + 1];
-
-      final url = getRouteUrl(state.selectedProfile, pointToString(startPoint),
-          pointToString(endPoint));
-
-      var response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        var data = jsonDecode(response.body);
-        var listOfPoints =
-            data['features'][0]['geometry']['coordinates'] as List<dynamic>;
-
-        // Zamiana punktów z listy na odpowiedni format LatLng
-        routePointsTemp.addAll(listOfPoints
-            .map((e) => coordinates.LatLng(e[1].toDouble(), e[0].toDouble()))
-            .toList());
-
-        // Obliczanie dystansu i czasu
-        double segmentDistance =
-            data['features'][0]['properties']['segments'][0]['distance'] / 1000;
-        double segmentDuration =
-            data['features'][0]['properties']['segments'][0]['duration'] / 60;
-
-        totalDistance += segmentDistance;
-        totalDuration += segmentDuration;
-      } else {
-        ScaffoldMessenger.of(state.context).showSnackBar(
-          const SnackBar(content: Text('Nie udało się pobrać trasy.')),
-        );
-        return; // Zakończ, jeśli któraś trasa nie powiedzie się
-      }
-    }
-
-    state.setState(() {
-      state.routePoints = routePointsTemp;
-      state.distance = totalDistance;
-      state.duration = totalDuration;
-      state.fitMapCamera();
-    });
-  } else {
-    ScaffoldMessenger.of(state.context).showSnackBar(
-      const SnackBar(content: Text('Proszę dodać dwa punkty na mapie.')),
-    );
+  if (!state.points.isNotEmpty) {
+    throw StateError(
+        'Nie można wygenerować trasy. - Proszę dodać dwa punkty na mapie.');
   }
+  final coordinates.LatLng start = state.points[0];
+  final coordinates.LatLng end =
+      state.points[state.points.length - 1]; // Ostatni punkt to koniec
+  final List<coordinates.LatLng> stopsMap = state.stops;
+  List<coordinates.LatLng> routePointsTemp = []; //temporary
+  double totalDistance = 0.0;
+  double totalDuration = 0.0;
+
+  // Jeżeli mamy przynajmniej jeden przystanek
+  List<coordinates.LatLng> allStops = [start] + stopsMap + [end];
+
+  for (int i = 0; i < allStops.length - 1; i++) {
+    final startPoint = allStops[i];
+    final endPoint = allStops[i + 1];
+
+    final url = getRouteUrl(state.selectedProfile, pointToString(startPoint),
+        pointToString(endPoint));
+
+    var response = await http.get(url);
+    checkResponseCode(response);
+
+    var data = jsonDecode(response.body);
+    var listOfPoints =
+        data['features'][0]['geometry']['coordinates'] as List<dynamic>;
+
+    // Zamiana punktów z listy na odpowiedni format LatLng
+    routePointsTemp.addAll(listOfPoints
+        .map((e) => coordinates.LatLng(e[1].toDouble(), e[0].toDouble()))
+        .toList());
+
+    // Obliczanie dystansu i czasu
+    double segmentDistance =
+        data['features'][0]['properties']['segments'][0]['distance'] / 1000;
+    double segmentDuration =
+        data['features'][0]['properties']['segments'][0]['duration'] / 60;
+
+    totalDistance += segmentDistance;
+    totalDuration += segmentDuration;
+  }
+
+  state.setState(() {
+    state.routePoints = routePointsTemp;
+    state.distance = totalDistance;
+    state.duration = totalDuration;
+    state.fitMapCamera();
+  });
 }
 
 Future<void> generateLoop_body(dynamic state) async {
-  if (state.points.length == 1) {
+  try {
+    if (state.points.length != 1) {
+      throw StateError(
+          "Nie można wygenerować trasy. - Należy dodać tylko jeden punkt.");
+    }
     final startPoint = state.points[0];
 
     // Generowanie punktów spiralnych
@@ -115,79 +110,62 @@ Future<void> generateLoop_body(dynamic state) async {
           pointToString(currentPoint), pointToString(nextPoint));
       final responseToNextPoint = await http.get(urlToNextPoint);
 
-      if (responseToNextPoint.statusCode == 200) {
-        final dataToNextPoint = jsonDecode(responseToNextPoint.body);
-        final pointsToNextPoint = dataToNextPoint['features'][0]['geometry']
-            ['coordinates'] as List<dynamic>;
+      checkResponseCode(responseToNextPoint);
+      final dataToNextPoint = jsonDecode(responseToNextPoint.body);
+      final pointsToNextPoint = dataToNextPoint['features'][0]['geometry']
+          ['coordinates'] as List<dynamic>;
 
-        allRoutePoints.add(pointsToNextPoint
-            .map((e) => coordinates.LatLng(e[1].toDouble(), e[0].toDouble()))
-            .toList());
+      allRoutePoints.add(pointsToNextPoint
+          .map((e) => coordinates.LatLng(e[1].toDouble(), e[0].toDouble()))
+          .toList());
 
-        totalDistance += dataToNextPoint['features'][0]['properties']
-                ['segments'][0]['distance'] /
-            1000;
-        totalTime = dataToNextPoint['features'][0]['properties']['segments'][0]
-                ['duration'] /
-            60;
+      totalDistance += dataToNextPoint['features'][0]['properties']['segments']
+              [0]['distance'] /
+          1000;
+      totalTime = dataToNextPoint['features'][0]['properties']['segments'][0]
+              ['duration'] /
+          60;
 
-        // Aktualizuj bieżący punkt
-        currentPoint = nextPoint;
-      } else {
-        ScaffoldMessenger.of(state.context).showSnackBar(const SnackBar(
-            content: Text('Nie udało się wyznaczyć trasy między punktami.')));
-        return;
-      }
+      // Aktualizuj bieżący punkt
+      currentPoint = nextPoint;
     }
 
-    // Na koniec wyznacz trasę do punktu początkowego, aby zakończyć spiralę
     final urlToStart = getRouteUrl(state.selectedProfile,
         pointToString(currentPoint), pointToString(startPoint));
     final responseToStart = await http.get(urlToStart);
 
-    if (responseToStart.statusCode == 200) {
-      final dataToStart = jsonDecode(responseToStart.body);
-      final pointsToStart = dataToStart['features'][0]['geometry']
-          ['coordinates'] as List<dynamic>;
+    checkResponseCode(responseToStart);
 
-      allRoutePoints.add(pointsToStart
-          .map((e) => coordinates.LatLng(e[1].toDouble(), e[0].toDouble()))
-          .toList());
+    final dataToStart = jsonDecode(responseToStart.body);
+    final pointsToStart =
+        dataToStart['features'][0]['geometry']['coordinates'] as List<dynamic>;
 
-      totalDistance += dataToStart['features'][0]['properties']['segments'][0]
-              ['distance'] /
-          1000;
-      totalTime += dataToStart['features'][0]['properties']['segments'][0]
-              ['duration'] /
-          60;
+    allRoutePoints.add(pointsToStart
+        .map((e) => coordinates.LatLng(e[1].toDouble(), e[0].toDouble()))
+        .toList());
 
-      double expectedDistance = state.loopDistance;
+    totalDistance += dataToStart['features'][0]['properties']['segments'][0]
+            ['distance'] /
+        1000;
+    totalTime += dataToStart['features'][0]['properties']['segments'][0]
+            ['duration'] /
+        60;
 
-      // Sprawdzamy, czy całkowity dystans jest odpowiedni
-      if (!isDistanceValid(totalDistance, expectedDistance)) {
-        ScaffoldMessenger.of(state.context).showSnackBar(
-          const SnackBar(
-              content: Text(
-                  'Dystans trasy nie jest odpowiedni, spróbujmy ponownie.')),
-        );
-        state.generateLoop(); // Rekursja w przypadku nieakceptowalnego dystansu
-        return;
-      }
+    double expectedDistance = state.loopDistance;
 
-      // Zapisz trasę i zaktualizuj dane
+    // Sprawdzamy, czy całkowity dystans jest odpowiedni - zapisujemy jeśli tak, restartujemy metodę jeśli nie
+    if (isDistanceValid(totalDistance, expectedDistance)) {
       state.setState(() {
         state.routePoints = allRoutePoints.expand((x) => x).toList();
-        state.distance = totalDistance; // Przypisujemy całkowitą długość trasy
+        state.distance = totalDistance;
         state.duration = totalTime;
+        state.fitMapCamera();
       });
     } else {
-      ScaffoldMessenger.of(state.context).showSnackBar(const SnackBar(
-          content:
-              Text('Nie udało się wyznaczyć trasy do punktu startowego.')));
+      state.generateLoop();
     }
-  } else {
-    ScaffoldMessenger.of(state.context).showSnackBar(
-        const SnackBar(content: Text('Proszę dodać dokładnie jeden punkt.')));
+  } catch (e) {
+    rethrow;
   }
 }
 
@@ -222,9 +200,8 @@ double calculateDistance(coordinates.LatLng p1, coordinates.LatLng p2) {
   return earthRadiusKm * c; // Dystans w kilometrach
 }
 
-bool isDistanceValid(double totalDistance, double expectedDistance) {
-  // Oczekiwana długość trasy i tolerancja
-  double tolerance = 0.5;
+bool isDistanceValid(double totalDistance, double expectedDistance,
+    {double tolerance = 0.5}) {
   return totalDistance <= expectedDistance * (1 + tolerance) &&
       totalDistance >= expectedDistance * (1 - tolerance);
 }
