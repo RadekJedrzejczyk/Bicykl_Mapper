@@ -9,4 +9,7 @@ Warto zwrócić uwagę, iż postępując zgodnie z instrukcjami w dokumentacji F
 
 
 ## Uruchomienie
-Po zainstalowaniu wymaganych pakietów w głównym folderze aplikacji należy uruchomić komendę  ```flutter run -d edge``` (uruchomienie z wykorzystaniem Mirosoft Edge). W przypadku pierwszego uruchomienia aplikacja może ściągać brakujące pakiety, ale po chwili uruchomi się okno z wpełni funkcjonalną aplikacją.
+1. Utwórz główny katalog projektu za pomocą ```flutter create navigation_app```
+2. Skopiuj pliki z repozytorium i zastąp te już istniejące.
+3. Teraz możesz uruchomić aplikację ```flutter run```.
+Jeżeli nie masz zainstalowanych pakietów to moga wystapić błędy - postepuj zgodnie z poleceniami konsoli lub dokumentacją Flutter.
